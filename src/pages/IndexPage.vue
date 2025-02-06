@@ -8,7 +8,7 @@
       @search="onSearch"
     />
     <MyDivider />
-    <a-tabs v-model:activeKey="activeKey" @change="onTabChange">
+    <a-tabs v-model:activeKey="activeKey" @tabClick="onTabClick">
       <a-tab-pane key="post" tab="文章">
         <PostList :post-list="postList" />
       </a-tab-pane>
@@ -40,10 +40,15 @@ const pictureList = ref([]);
 
 const route = useRoute();
 const router = useRouter();
-const activeKey = route.params.category;
+const activeKey = ref(route.params.category || "");
+
+// 监听路由参数变化，更新 activeKey
+watchEffect(() => {
+  activeKey.value = route.params.category || "";
+});
 
 const initSearchParams = {
-  type: activeKey,
+  type: activeKey.value,
   text: "",
   pageSize: 10,
   pageNum: 1,
@@ -102,22 +107,23 @@ const loadAllData = (params: any) => {
  * @param params
  */
 const loadData = (params: any) => {
-  const { type = "post" } = params;
-  if (!type) {
-    message.error("类别为空");
-    return;
-  }
+  const { type } = params;
   const query = {
     ...params,
     searchText: params.text,
   };
   myAxios.post("search/all", query).then((res: any) => {
-    if (type === "post") {
-      postList.value = res.dataList;
+    if (!type) {
+      // 当 type 为空时，加载所有类型的数据
+      postList.value = res.postList || [];
+      userList.value = res.userList || [];
+      pictureList.value = res.pictureList || [];
+    } else if (type === "post") {
+      postList.value = res.dataList || [];
     } else if (type === "user") {
-      userList.value = res.dataList;
+      userList.value = res.dataList || [];
     } else if (type === "picture") {
-      pictureList.value = res.dataList;
+      pictureList.value = res.dataList || [];
     }
   });
 };
@@ -142,7 +148,16 @@ const onSearch = (value: string) => {
   });
 };
 
-const onTabChange = (key: string) => {
+const onTabClick = (key: string) => {
+  // 如果点击当前已选中的标签页，则取消选择
+  if (key === route.params.category) {
+    router.push({
+      path: "/",
+      query: searchParams.value,
+    });
+    return;
+  }
+  // 否则切换到新的标签页
   router.push({
     path: `/${key}`,
     query: searchParams.value,
