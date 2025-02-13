@@ -18,6 +18,9 @@
       <a-tab-pane key="user" tab="用户">
         <UserList :user-list="userList" />
       </a-tab-pane>
+      <a-tab-pane key="file" tab="文件">
+        <FileList />
+      </a-tab-pane>
     </a-tabs>
   </div>
 </template>
@@ -27,6 +30,7 @@ import { ref, watchEffect } from "vue";
 import PostList from "@/components/PostList.vue";
 import PictureList from "@/components/PictureList.vue";
 import UserList from "@/components/UserList.vue";
+import FileList from "@/components/FileList.vue";
 import MyDivider from "@/components/MyDivider.vue";
 import { useRoute, useRouter } from "vue-router";
 import myAxios from "@/plugins/myAxios";
