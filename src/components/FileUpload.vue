@@ -2,9 +2,12 @@
   <div class="file-list">
     <a-upload
       :file-list="fileList"
-      :custom-request="customRequest"
+      :custom-request="customUpload"
       :multiple="true"
       :show-upload-list="true"
+      :remove-icon="false"
+      :on-preview="() => {}"
+      :on-remove="customDelete"
     >
       <a-button type="primary">
         <upload-outlined />
@@ -44,10 +47,18 @@ import { message } from "ant-design-vue";
 import { UploadOutlined, FileOutlined } from "@ant-design/icons-vue";
 import myAxios from "@/plugins/myAxios";
 
-const fileList = ref([]);
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface FileItem {
+  uid: string;
+  name: string;
+  status: string;
+  fileId: number;
+}
+
+const fileList = ref<FileItem[]>([]);
 const uploadedFiles = ref([]);
 
-const customRequest = async (options: any) => {
+const customUpload = async (options: any) => {
   const { file, onSuccess, onError, onProgress } = options;
   const formData = new FormData();
   formData.append("file", file);
@@ -91,6 +102,29 @@ const customRequest = async (options: any) => {
     fileList.value = fileList.value.map((item) =>
       item.uid === file.uid ? { ...item, status: "error" } : item
     );
+  }
+};
+const customDelete = async (file: any) => {
+  try {
+    // 调用删除接口
+    const response = await myAxios.delete(`file/delete/${file.fileId}`);
+    console.log("shxl:::", response.data);
+    if (response.data.success !== false) {
+      message.success("文件删除成功");
+      // 从文件列表中移除文件
+      fileList.value = fileList.value.filter(
+        (item: any) => item.uid !== file.uid
+      );
+      // 从已上传文件列表中移除文件
+      uploadedFiles.value = uploadedFiles.value.filter(
+        (item: any) => item.uid !== file.uid
+      );
+    } else {
+      console.log("shxl:::", response.data);
+      message.error(response.data.responseMessage || "文件删除失败");
+    }
+  } catch (error) {
+    message.error("文件删除失败111");
   }
 };
 
