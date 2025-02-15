@@ -20,20 +20,60 @@
         </a-menu-item>
       </a-menu>
     </a-layout-sider>
-    <a-layout-content style="padding: 24px">
-      <slot />
-    </a-layout-content>
+    <a-layout>
+      <a-layout-header
+        style="background: #fff; padding: 0 24px; text-align: right"
+      >
+        <template v-if="isLoggedIn">
+          <a-dropdown>
+            <a class="user-dropdown-link" @click.prevent>
+              <span class="username">{{ currentUser?.username }}</span>
+              <down-outlined />
+            </a>
+            <template #overlay>
+              <a-menu>
+                <a-menu-item key="logout" @click="handleLogout">
+                  <logout-outlined />
+                  退出登录
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+        </template>
+        <template v-else>
+          <a-button type="link" @click="goToLogin">登录</a-button>
+        </template>
+      </a-layout-header>
+      <a-layout-content style="padding: 24px">
+        <slot />
+      </a-layout-content>
+    </a-layout>
   </a-layout>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { SearchOutlined, FileOutlined } from "@ant-design/icons-vue";
+import {
+  SearchOutlined,
+  FileOutlined,
+  DownOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons-vue";
+import { message } from "ant-design-vue";
 
 const router = useRouter();
 const route = useRoute();
 const selectedKeys = ref([route.path === "/" ? "search" : "file"]);
+
+const isLoggedIn = computed(() => {
+  return localStorage.getItem("token") !== null;
+});
+
+const currentUser = computed(() => {
+  const userStr = localStorage.getItem("user");
+  return userStr ? JSON.parse(userStr) : null;
+});
 
 const goToSearch = () => {
   router.push("/");
@@ -43,6 +83,17 @@ const goToSearch = () => {
 const goToFile = () => {
   router.push("/file");
   selectedKeys.value = ["file"];
+};
+
+const goToLogin = () => {
+  router.push("/login");
+};
+
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  message.success("退出登录成功");
+  router.push("/login");
 };
 </script>
 
@@ -57,5 +108,16 @@ const goToFile = () => {
 
 .ant-layout-content {
   background: #fff;
+}
+
+.user-dropdown-link {
+  color: rgba(0, 0, 0, 0.85);
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.username {
+  margin-right: 4px;
 }
 </style>
