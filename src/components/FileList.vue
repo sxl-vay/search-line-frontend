@@ -1,7 +1,7 @@
 <template>
   <div class="file-list">
     <a-upload
-      v-model:file-list="fileList"
+      :file-list="fileList"
       :custom-request="customRequest"
       :multiple="true"
       :show-upload-list="true"
@@ -67,10 +67,24 @@ const customRequest = async (options: any) => {
 
     onSuccess(response);
     message.success("文件上传成功");
+    // 更新文件列表状态
+    fileList.value = [
+      ...fileList.value,
+      {
+        uid: file.uid,
+        name: file.name,
+        status: "done",
+        url: response.data?.url || "",
+      },
+    ];
     loadFileList(); // 重新加载文件列表
   } catch (error) {
     onError();
     message.error("文件上传失败");
+    // 更新失败状态
+    fileList.value = fileList.value.map((item) =>
+      item.uid === file.uid ? { ...item, status: "error" } : item
+    );
   }
 };
 
