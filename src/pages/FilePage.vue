@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import FileList from "@/components/FileList.vue";
+import FileList from "@/components/FileUpload.vue";
 </script>
 
 <style scoped>

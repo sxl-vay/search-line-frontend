@@ -77,7 +77,6 @@ const customRequest = async (options: any) => {
         url: response.data?.url || "",
       },
     ];
-    loadFileList(); // 重新加载文件列表
   } catch (error) {
     onError();
     message.error("文件上传失败");
@@ -88,15 +87,6 @@ const customRequest = async (options: any) => {
   }
 };
 
-const loadFileList = async () => {
-  try {
-    const response = await myAxios.get("file/list");
-    uploadedFiles.value = response.data || [];
-  } catch (error) {
-    message.error("获取文件列表失败");
-  }
-};
-
 const formatFileSize = (size: number) => {
   if (size < 1024) return size + " B";
   if (size < 1024 * 1024) return (size / 1024).toFixed(2) + " KB";
@@ -104,9 +94,6 @@ const formatFileSize = (size: number) => {
     return (size / (1024 * 1024)).toFixed(2) + " MB";
   return (size / (1024 * 1024 * 1024)).toFixed(2) + " GB";
 };
-
-// 初始加载文件列表
-loadFileList();
 </script>
 
 <style scoped>
