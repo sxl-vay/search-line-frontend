@@ -65,18 +65,25 @@ const customRequest = async (options: any) => {
       },
     });
 
-    onSuccess(response);
-    message.success("文件上传成功");
-    // 更新文件列表状态
-    fileList.value = [
-      ...fileList.value,
-      {
-        uid: file.uid,
-        name: file.name,
-        status: "done",
-        url: response.data?.url || "",
-      },
-    ];
+    const { data } = response;
+    if (data.success !== false) {
+      onSuccess(response);
+      message.success("文件上传成功");
+      // 更新文件列表状态
+      fileList.value = [
+        ...fileList.value,
+        {
+          uid: file.uid,
+          name: data.name || file.name,
+          status: "done",
+          fileId: data.id,
+        },
+      ];
+    } else {
+      onError();
+      message.error(data.responseMessage || "文件上传失败");
+    }
+    console.log("文件上传成功", fileList.value);
   } catch (error) {
     onError();
     message.error("文件上传失败");
