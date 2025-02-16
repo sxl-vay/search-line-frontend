@@ -55,9 +55,10 @@ const onFinish = async (values: FormState) => {
   try {
     const res = await myAxios.post("/user/login", values);
     if (res.data.success !== false) {
+      console.log("登录成功", res.data);
       message.success("登录成功");
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      localStorage.setItem("user", JSON.stringify(res.data));
       router.push("/");
     } else {
       message.error(res.data.responseMessage || "登录失败");

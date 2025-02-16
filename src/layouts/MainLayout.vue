@@ -27,7 +27,7 @@
         <template v-if="isLoggedIn">
           <a-dropdown>
             <a class="user-dropdown-link" @click.prevent>
-              <span class="username">{{ currentUser?.username }}</span>
+              <span class="username">{{ currentUser?.nickName }}</span>
               <down-outlined />
             </a>
             <template #overlay>
@@ -72,6 +72,9 @@ const isLoggedIn = computed(() => {
 
 const currentUser = computed(() => {
   const userStr = localStorage.getItem("user");
+  console.log("currentUser", userStr);
+  const user = JSON.parse(userStr);
+  console.log(" JSON.parse(userStr):", user);
   return userStr ? JSON.parse(userStr) : null;
 });
 
