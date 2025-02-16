@@ -39,7 +39,6 @@ instance.interceptors.response.use(
       router.push("/login");
       return Promise.reject(data);
     }
-    console.error("request error", data);
     return response.data;
   },
   function (error) {

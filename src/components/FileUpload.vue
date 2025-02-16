@@ -94,7 +94,6 @@ const customUpload = async (options: any) => {
       onError();
       message.error(data.responseMessage || "文件上传失败");
     }
-    console.log("文件上传成功", fileList.value);
   } catch (error) {
     onError();
     message.error("文件上传失败");
@@ -108,7 +107,6 @@ const customDelete = async (file: any) => {
   try {
     // 调用删除接口
     const response = await myAxios.delete(`file/delete/${file.fileId}`);
-    console.log("shxl:::", response.data);
     if (response.data.success !== false) {
       message.success("文件删除成功");
       // 从文件列表中移除文件
@@ -120,7 +118,6 @@ const customDelete = async (file: any) => {
         (item: any) => item.uid !== file.uid
       );
     } else {
-      console.log("shxl:::", response.data);
       message.error(response.data.responseMessage || "文件删除失败");
     }
   } catch (error) {

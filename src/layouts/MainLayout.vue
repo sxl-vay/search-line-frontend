@@ -72,7 +72,6 @@ const isLoggedIn = computed(() => {
 
 const currentUser = computed(() => {
   const userStr = localStorage.getItem("user");
-  console.log("currentUser", userStr);
   const user = JSON.parse(userStr);
   console.log(" JSON.parse(userStr):", user);
   return userStr ? JSON.parse(userStr) : null;
