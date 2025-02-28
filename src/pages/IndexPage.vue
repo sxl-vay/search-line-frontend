@@ -109,18 +109,22 @@ const loadAllData = (params: any) => {
  */
 const loadData = (params: any) => {
   const { type } = params;
+
+  console.log("type:", type);
   const query = {
     ...params,
     searchText: params.text,
   };
   myAxios.post("search/all", query).then((res: any) => {
     if (!type) {
+      console.log("res:", res);
       // 当 type 为空时，加载所有类型的数据
       postList.value = res.postList || [];
       userList.value = res.userList || [];
       pictureList.value = res.pictureList || [];
     } else if (type === "post") {
-      postList.value = res.dataList || [];
+      console.log("res:", res);
+      postList.value = res.data.postList || [];
     } else if (type === "user") {
       userList.value = res.dataList || [];
     } else if (type === "picture") {

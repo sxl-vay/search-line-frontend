@@ -19,8 +19,17 @@
 import gege from "../assets/gege.jpg";
 import { withDefaults, defineProps } from "vue";
 
+interface Post {
+  id: number;
+  title: string;
+  content: string;
+  createTime?: string;
+  updateTime?: string;
+  tags?: string[];
+}
+
 interface Props {
-  postList: any[];
+  postList: Post[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
