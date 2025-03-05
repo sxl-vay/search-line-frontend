@@ -16,7 +16,13 @@
 
     <!-- 文件列表表格 -->
     <div class="file-table">
-      <a-table :columns="columns" :data-source="uploadedFiles" rowKey="id">
+      <a-table
+        :columns="columns"
+        :data-source="uploadedFiles"
+        rowKey="id"
+        :pagination="pagination"
+        @change="handleTableChange"
+      >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'fileSize'">
             {{ formatFileSize(record.fileSize) }}
@@ -54,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, reactive } from "vue";
 import { message } from "ant-design-vue";
 import { UploadOutlined, FileOutlined } from "@ant-design/icons-vue";
 import myAxios from "@/plugins/myAxios";
@@ -75,8 +81,25 @@ interface UploadedFile {
   createTime: string;
 }
 
+interface Pagination {
+  current: number;
+  pageSize: number;
+  total: number;
+  showSizeChanger: boolean;
+  showTotal: (total: number) => string;
+}
+
 const fileList = ref<FileItem[]>([]);
 const uploadedFiles = ref<UploadedFile[]>([]);
+
+// 分页配置
+const pagination = reactive<Pagination>({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  showSizeChanger: true,
+  showTotal: (total) => `共 ${total} 条记录`,
+});
 
 // 定义表格列
 const columns = [
@@ -102,28 +125,38 @@ const columns = [
   },
 ];
 
+// 处理表格变化事件（分页、排序、筛选）
+const handleTableChange = (pag: any) => {
+  pagination.current = pag.current;
+  pagination.pageSize = pag.pageSize;
+  fetchFileList();
+};
+
 // 获取文件列表
 const fetchFileList = async () => {
   try {
-    const response = await myAxios.get("file/list");
-    console.log("获取文件列表成功 response.data:", response);
-    if (response.success !== false) {
-      // 处理接口返回的数据，确保字段名匹配
-      const fileData = response.data || [];
-      // 将接口返回的数据映射到组件需要的格式
-      uploadedFiles.value = fileData.map((file: any) => ({
-        id: file.id,
-        name: file.name,
-        fileSize: file.fileSize,
-        url: file.url,
-        createTime: file.createTime,
-      }));
-      console.log("shxl::", uploadedFiles.value);
-    } else {
-      message.error(response.data.responseMessage || "获取文件列表失败");
-    }
+    const params = {
+      current: pagination.current,
+      pageSize: pagination.pageSize,
+    };
+    const response = await myAxios.get("file/list", { params });
+    const data = response.data;
+    // 处理接口返回的数据，确保字段名匹配
+    console.log("获取文件列表成功 response:", response);
+    const fileData = data.files;
+    // 更新总记录数
+    pagination.total = data?.total || fileData.length;
+
+    // 将接口返回的数据映射到组件需要的格式
+    uploadedFiles.value = fileData.map((file: any) => ({
+      id: file.id,
+      name: file.name,
+      fileSize: file.fileSize,
+      url: file.url,
+      createTime: file.createTime,
+    }));
   } catch (error) {
-    message.error("获取文件列表失败");
+    message.error("获取文件列表失败s");
   }
 };
 
