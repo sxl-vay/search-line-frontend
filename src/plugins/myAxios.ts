@@ -3,7 +3,7 @@ import { message } from "ant-design-vue";
 import router from "@/router";
 
 const instance = axios.create({
-  baseURL: "http://192.168.40.95:8089/api",
+  baseURL: "http://192.168.42.106:8089/api",
   timeout: 10000,
   headers: {},
 });
@@ -29,6 +29,7 @@ instance.interceptors.response.use(
     if (data.code === 0) {
       return data.data;
     }
+    console.log("shxl::认证：：");
     // 处理未认证的情况
     if (data.code === 40100 || data.code === 40101) {
       // 清除本地存储的认证信息

@@ -5,7 +5,6 @@
       :custom-request="customUpload"
       :multiple="true"
       :show-upload-list="true"
-      :remove-icon="false"
       :on-preview="() => {}"
       :on-remove="customDelete"
     >
@@ -14,35 +13,48 @@
         点击上传文件
       </a-button>
     </a-upload>
-    <a-list
-      class="file-items"
-      :data-source="uploadedFiles"
-      item-layout="horizontal"
-    >
-      <template #renderItem="{ item }">
-        <a-list-item>
-          <a-list-item-meta>
-            <template #title>
-              <a :href="item.url" target="_blank">{{ item.fileName }}</a>
-            </template>
-            <template #description>
-              <span>
-                {{ formatFileSize(item.fileSize) }} |
-                {{ item.uploadTime }}
-              </span>
-            </template>
-            <template #avatar>
-              <file-outlined />
-            </template>
-          </a-list-item-meta>
-        </a-list-item>
-      </template>
-    </a-list>
+
+    <!-- 文件列表表格 -->
+    <div class="file-table">
+      <a-table :columns="columns" :data-source="uploadedFiles" rowKey="id">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'fileSize'">
+            {{ formatFileSize(record.fileSize) }}
+          </template>
+        </template>
+      </a-table>
+    </div>
+
+    <!-- 原有的列表展示，可以保留或删除 -->
+    <!--    <a-list-->
+    <!--      class="file-items"-->
+    <!--      :data-source="uploadedFiles"-->
+    <!--      item-layout="horizontal"-->
+    <!--    >-->
+    <!--      <template #renderItem="{ item }">-->
+    <!--        <a-list-item>-->
+    <!--          <a-list-item-meta>-->
+    <!--            <template #title>-->
+    <!--              <a :href="item.url" target="_blank">{{ item.name }}</a>-->
+    <!--            </template>-->
+    <!--            <template #description>-->
+    <!--              <span>-->
+    <!--                {{ formatFileSize(item.fileSize) }} |-->
+    <!--                {{ item.createTime }}-->
+    <!--              </span>-->
+    <!--            </template>-->
+    <!--            <template #avatar>-->
+    <!--              <file-outlined />-->
+    <!--            </template>-->
+    <!--          </a-list-item-meta>-->
+    <!--        </a-list-item>-->
+    <!--      </template>-->
+    <!--    </a-list>-->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { message } from "ant-design-vue";
 import { UploadOutlined, FileOutlined } from "@ant-design/icons-vue";
 import myAxios from "@/plugins/myAxios";
@@ -55,8 +67,65 @@ interface FileItem {
   fileId: number;
 }
 
+interface UploadedFile {
+  id: number;
+  name: string;
+  fileSize: number;
+  url: string;
+  createTime: string;
+}
+
 const fileList = ref<FileItem[]>([]);
-const uploadedFiles = ref([]);
+const uploadedFiles = ref<UploadedFile[]>([]);
+
+// 定义表格列
+const columns = [
+  {
+    title: "ID",
+    dataIndex: "id",
+    key: "id",
+  },
+  {
+    title: "文件名称",
+    dataIndex: "name",
+    key: "name",
+  },
+  {
+    title: "文件大小",
+    dataIndex: "fileSize",
+    key: "fileSize",
+  },
+  {
+    title: "创建时间",
+    dataIndex: "createTime",
+    key: "createTime",
+  },
+];
+
+// 获取文件列表
+const fetchFileList = async () => {
+  try {
+    const response = await myAxios.get("file/list");
+    console.log("获取文件列表成功 response.data:", response);
+    if (response.success !== false) {
+      // 处理接口返回的数据，确保字段名匹配
+      const fileData = response.data || [];
+      // 将接口返回的数据映射到组件需要的格式
+      uploadedFiles.value = fileData.map((file: any) => ({
+        id: file.id,
+        name: file.name,
+        fileSize: file.fileSize,
+        url: file.url,
+        createTime: file.createTime,
+      }));
+      console.log("shxl::", uploadedFiles.value);
+    } else {
+      message.error(response.data.responseMessage || "获取文件列表失败");
+    }
+  } catch (error) {
+    message.error("获取文件列表失败");
+  }
+};
 
 const customUpload = async (options: any) => {
   const { file, onSuccess, onError, onProgress } = options;
@@ -90,6 +159,8 @@ const customUpload = async (options: any) => {
           fileId: data.id,
         },
       ];
+      // 上传成功后重新获取文件列表
+      fetchFileList();
     } else {
       onError();
       message.error(data.responseMessage || "文件上传失败");
@@ -103,6 +174,7 @@ const customUpload = async (options: any) => {
     );
   }
 };
+
 const customDelete = async (file: any) => {
   try {
     // 调用删除接口
@@ -115,13 +187,13 @@ const customDelete = async (file: any) => {
       );
       // 从已上传文件列表中移除文件
       uploadedFiles.value = uploadedFiles.value.filter(
-        (item: any) => item.uid !== file.uid
+        (item: any) => item.id !== file.fileId
       );
     } else {
       message.error(response.data.responseMessage || "文件删除失败");
     }
   } catch (error) {
-    message.error("文件删除失败111");
+    message.error("文件删除失败");
   }
 };
 
@@ -132,11 +204,22 @@ const formatFileSize = (size: number) => {
     return (size / (1024 * 1024)).toFixed(2) + " MB";
   return (size / (1024 * 1024 * 1024)).toFixed(2) + " GB";
 };
+
+// 组件挂载时获取文件列表
+onMounted(() => {
+  fetchFileList();
+});
 </script>
 
 <style scoped>
 .file-list {
   padding: 20px;
+}
+
+.file-table {
+  margin-top: 20px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
 }
 
 .file-items {
