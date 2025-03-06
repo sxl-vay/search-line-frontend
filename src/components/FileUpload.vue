@@ -27,6 +27,29 @@
           <template v-if="column.key === 'fileSize'">
             {{ formatFileSize(record.fileSize) }}
           </template>
+          <template v-if="column.key === 'action'">
+            <div class="action-buttons">
+              <!--
+              <a-button type="link" size="small" @click="previewFile(record)">
+                <eye-outlined />
+                预览
+              </a-button>
+              -->
+              <a-button type="link" size="small" @click="downloadFile(record)">
+                <download-outlined />
+                下载
+              </a-button>
+              <a-button
+                type="link"
+                size="small"
+                danger
+                @click="deleteFile(record)"
+              >
+                <delete-outlined />
+                删除
+              </a-button>
+            </div>
+          </template>
         </template>
       </a-table>
     </div>
@@ -62,7 +85,11 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from "vue";
 import { message } from "ant-design-vue";
-import { UploadOutlined, FileOutlined } from "@ant-design/icons-vue";
+import {
+  UploadOutlined,
+  DownloadOutlined,
+  DeleteOutlined,
+} from "@ant-design/icons-vue";
 import myAxios from "@/plugins/myAxios";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -122,6 +149,11 @@ const columns = [
     title: "创建时间",
     dataIndex: "createTime",
     key: "createTime",
+  },
+  {
+    title: "操作",
+    key: "action",
+    width: 200,
   },
 ];
 
@@ -230,6 +262,47 @@ const customDelete = async (file: any) => {
   }
 };
 
+// 预览文件
+const previewFile = (record: UploadedFile) => {
+  if (record.url) {
+    window.open(record.url, "_blank");
+  } else {
+    message.warning("文件链接不可用");
+  }
+};
+
+// 下载文件
+const downloadFile = (record: UploadedFile) => {
+  if (record.url) {
+    const a = document.createElement("a");
+    a.href = record.url;
+    a.download = record.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } else {
+    message.warning("文件链接不可用");
+  }
+};
+
+// 删除文件
+const deleteFile = async (record: UploadedFile) => {
+  try {
+    const response = await myAxios.delete(`file/delete/${record.id}`);
+    if (response.data.success !== false) {
+      message.success("文件删除成功");
+      // 从已上传文件列表中移除文件
+      uploadedFiles.value = uploadedFiles.value.filter(
+        (item) => item.id !== record.id
+      );
+    } else {
+      message.error(response.data.responseMessage || "文件删除失败");
+    }
+  } catch (error) {
+    message.error("文件删除失败");
+  }
+};
+
 const formatFileSize = (size: number) => {
   if (size < 1024) return size + " B";
   if (size < 1024 * 1024) return (size / 1024).toFixed(2) + " KB";
@@ -253,6 +326,11 @@ onMounted(() => {
   margin-top: 20px;
   border: 1px solid #f0f0f0;
   border-radius: 4px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
 }
 
 .file-items {

@@ -64,7 +64,9 @@ import { message } from "ant-design-vue";
 
 const router = useRouter();
 const route = useRoute();
-const selectedKeys = ref([route.path === "/" ? "search" : "file"]);
+const selectedKeys = ref([
+  route.path === "/" ? "search" : route.path === "/file" ? "file" : "search",
+]);
 
 const isLoggedIn = computed(() => {
   return localStorage.getItem("token") !== null;
@@ -86,6 +88,15 @@ const goToFile = () => {
   router.push("/file");
   selectedKeys.value = ["file"];
 };
+
+// 监听路由变化，更新选中的菜单项
+router.afterEach((to) => {
+  if (to.path === "/") {
+    selectedKeys.value = ["search"];
+  } else if (to.path === "/file") {
+    selectedKeys.value = ["file"];
+  }
+});
 
 const goToLogin = () => {
   router.push("/login");
