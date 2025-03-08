@@ -34,7 +34,7 @@
       <a-layout-header
         style="background: #fff; padding: 0 24px; text-align: right"
       >
-        <template v-if="isLoggedIn">
+        <template v-if="isLoggedIn && route.path != '/login'">
           <a-dropdown>
             <a class="user-dropdown-link" @click.prevent>
               <span class="username">{{ currentUser?.nickName }}</span>
@@ -50,7 +50,7 @@
             </template>
           </a-dropdown>
         </template>
-        <template v-else>
+        <template v-else-if="route.path != '/login'">
           <a-button type="link" @click="goToLogin">登录</a-button>
         </template>
       </a-layout-header>

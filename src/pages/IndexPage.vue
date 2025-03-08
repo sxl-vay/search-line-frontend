@@ -157,14 +157,14 @@ const onTabClick = (key: string) => {
   // 如果点击当前已选中的标签页，则取消选择
   if (key === route.params.category) {
     router.push({
-      path: "/",
+      path: "/search",
       query: searchParams.value,
     });
     return;
   }
   // 否则切换到新的标签页
   router.push({
-    path: `/${key}`,
+    path: `/search/${key}`,
     query: searchParams.value,
   });
 };
