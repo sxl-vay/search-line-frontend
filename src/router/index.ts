@@ -2,14 +2,19 @@ import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import IndexPage from "../pages/IndexPage.vue";
 import FilePage from "../pages/FilePage.vue";
 import LoginPage from "../pages/LoginPage.vue";
+import WelcomePage from "../pages/WelcomePage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
+    component: WelcomePage,
+  },
+  {
+    path: "/search",
     component: IndexPage,
   },
   {
-    path: "/:category",
+    path: "/search/:category",
     component: IndexPage,
   },
   {

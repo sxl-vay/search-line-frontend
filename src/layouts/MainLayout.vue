@@ -6,6 +6,12 @@
         v-model:selectedKeys="selectedKeys"
         style="height: 100%"
       >
+        <a-menu-item key="home" @click="goToHome">
+          <template #icon>
+            <home-outlined />
+          </template>
+          首页
+        </a-menu-item>
         <a-menu-item key="search" @click="goToSearch">
           <template #icon>
             <search-outlined />
@@ -59,14 +65,23 @@ import {
   FileOutlined,
   DownOutlined,
   LogoutOutlined,
+  HomeOutlined,
 } from "@ant-design/icons-vue";
 import { message } from "ant-design-vue";
 
 const router = useRouter();
 const route = useRoute();
-const selectedKeys = ref([
-  route.path === "/" ? "search" : route.path === "/file" ? "file" : "search",
-]);
+
+// 根据当前路径设置选中的菜单项
+const getSelectedKey = () => {
+  if (route.path === "/") return "home";
+  if (route.path === "/search" || route.path.startsWith("/search/"))
+    return "search";
+  if (route.path === "/file") return "file";
+  return "";
+};
+
+const selectedKeys = ref([getSelectedKey()]);
 
 const isLoggedIn = computed(() => {
   return localStorage.getItem("token") !== null;
@@ -79,8 +94,13 @@ const currentUser = computed(() => {
   return userStr ? JSON.parse(userStr) : null;
 });
 
-const goToSearch = () => {
+const goToHome = () => {
   router.push("/");
+  selectedKeys.value = ["home"];
+};
+
+const goToSearch = () => {
+  router.push("/search");
   selectedKeys.value = ["search"];
 };
 
@@ -91,11 +111,7 @@ const goToFile = () => {
 
 // 监听路由变化，更新选中的菜单项
 router.afterEach((to) => {
-  if (to.path === "/") {
-    selectedKeys.value = ["search"];
-  } else if (to.path === "/file") {
-    selectedKeys.value = ["file"];
-  }
+  selectedKeys.value = [getSelectedKey()];
 });
 
 const goToLogin = () => {
