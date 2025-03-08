@@ -1,17 +1,21 @@
 <template>
   <a-layout>
-    <a-layout-sider width="200" style="background: #fff">
+    <a-layout-sider
+      v-if="route.path != '/' && route.path != '/login'"
+      width="200"
+      style="background: #fff"
+    >
       <a-menu
         mode="inline"
         v-model:selectedKeys="selectedKeys"
         style="height: 100%"
       >
-        <a-menu-item key="home" @click="goToHome">
+        <!--        <a-menu-item key="home" @click="goToHome">
           <template #icon>
             <home-outlined />
           </template>
           首页
-        </a-menu-item>
+        </a-menu-item>-->
         <a-menu-item key="search" @click="goToSearch">
           <template #icon>
             <search-outlined />
