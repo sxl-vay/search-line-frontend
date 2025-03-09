@@ -8,10 +8,23 @@
         rowKey="id"
         :pagination="pagination"
         @change="handleTableChange"
+        :scroll="{ x: 'max-content' }"
       >
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'fileSize'">
-            {{ formatFileSize(record.fileSize) }}
+            <a-tooltip :title="formatFileSize(record.fileSize)">
+              <span>{{ formatFileSize(record.fileSize) }}</span>
+            </a-tooltip>
+          </template>
+          <template v-if="column.key === 'name'">
+            <a-tooltip :title="record.name">
+              <span>{{ record.name }}</span>
+            </a-tooltip>
+          </template>
+          <template v-if="column.key === 'createTime'">
+            <a-tooltip :title="record.createTime">
+              <span>{{ record.createTime }}</span>
+            </a-tooltip>
           </template>
           <template v-if="column.key === 'action'">
             <div class="action-buttons">
@@ -108,6 +121,7 @@ const columns = [
     title: "ID",
     dataIndex: "id",
     key: "id",
+    width: 200,
   },
   {
     title: "文件名称",
@@ -118,11 +132,17 @@ const columns = [
     title: "文件大小",
     dataIndex: "fileSize",
     key: "fileSize",
+    ellipsis: true,
+    tooltip: true,
+    width: 120,
   },
   {
     title: "创建时间",
     dataIndex: "createTime",
     key: "createTime",
+    ellipsis: true,
+    tooltip: true,
+    width: 180,
   },
   {
     title: "操作",
@@ -279,6 +299,7 @@ const deleteFile = async (record: UploadedFile) => {
 };
 
 const formatFileSize = (size: number) => {
+  console.log("formatFileSize size:", size);
   if (size < 1024) return size + " B";
   if (size < 1024 * 1024) return (size / 1024).toFixed(2) + " KB";
   if (size < 1024 * 1024 * 1024)
@@ -312,5 +333,21 @@ onMounted(() => {
 
 .file-items {
   margin-top: 20px;
+}
+
+:deep(.ant-table-cell) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.ant-table-cell-ellipsis) {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+:deep(.ant-table-cell-ellipsis.ant-table-cell-tooltip) {
+  cursor: pointer;
 }
 </style>
