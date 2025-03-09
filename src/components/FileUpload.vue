@@ -1,19 +1,5 @@
 <template>
   <div class="file-list">
-    <a-upload
-      :file-list="fileList"
-      :custom-request="customUpload"
-      :multiple="true"
-      :show-upload-list="true"
-      :on-preview="() => {}"
-      :on-remove="customDelete"
-    >
-      <a-button type="primary">
-        <upload-outlined />
-        点击上传文件
-      </a-button>
-    </a-upload>
-
     <!-- 文件列表表格 -->
     <div class="file-table">
       <a-table
@@ -54,31 +40,19 @@
       </a-table>
     </div>
 
-    <!-- 原有的列表展示，可以保留或删除 -->
-    <!--    <a-list-->
-    <!--      class="file-items"-->
-    <!--      :data-source="uploadedFiles"-->
-    <!--      item-layout="horizontal"-->
-    <!--    >-->
-    <!--      <template #renderItem="{ item }">-->
-    <!--        <a-list-item>-->
-    <!--          <a-list-item-meta>-->
-    <!--            <template #title>-->
-    <!--              <a :href="item.url" target="_blank">{{ item.name }}</a>-->
-    <!--            </template>-->
-    <!--            <template #description>-->
-    <!--              <span>-->
-    <!--                {{ formatFileSize(item.fileSize) }} |-->
-    <!--                {{ item.createTime }}-->
-    <!--              </span>-->
-    <!--            </template>-->
-    <!--            <template #avatar>-->
-    <!--              <file-outlined />-->
-    <!--            </template>-->
-    <!--          </a-list-item-meta>-->
-    <!--        </a-list-item>-->
-    <!--      </template>-->
-    <!--    </a-list>-->
+    <a-upload
+      :file-list="fileList"
+      :custom-request="customUpload"
+      :multiple="true"
+      :show-upload-list="true"
+      :on-preview="() => {}"
+      :on-remove="customDelete"
+    >
+      <a-button type="primary">
+        <upload-outlined />
+        点击上传文件
+      </a-button>
+    </a-upload>
   </div>
 </template>
 
@@ -295,6 +269,7 @@ const deleteFile = async (record: UploadedFile) => {
       uploadedFiles.value = uploadedFiles.value.filter(
         (item) => item.id !== record.id
       );
+      fetchFileList();
     } else {
       message.error(response.data.responseMessage || "文件删除失败");
     }
@@ -323,9 +298,11 @@ onMounted(() => {
 }
 
 .file-table {
-  margin-top: 20px;
+  margin-top: -80px;
   border: 1px solid #f0f0f0;
   border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
 }
 
 .action-buttons {
