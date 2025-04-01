@@ -3,7 +3,7 @@ import { message } from "ant-design-vue";
 import router from "@/router";
 
 const instance = axios.create({
-  baseURL: "http://192.168.42.106:8089/api",
+  baseURL: "http://192.168.42.106:8080/api",
   timeout: 10000,
   headers: {},
 });
