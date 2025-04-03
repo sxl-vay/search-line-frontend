@@ -52,7 +52,10 @@
                   <span>{{ item.datetime }}</span>
                 </template>
                 <template #actions>
-                  <span @click="toggleReply(item)">回复</span>
+                  <span @click="toggleReply(item)" style="margin-right: 16px;">回复</span>
+                  <span @click="toggleChildren(item)">
+                    {{ item.showChildren ? '收起' : '展开' }} ({{ item.children.length }})
+                  </span>
                 </template>
                 <!-- 回复表单 -->
                 <div v-if="item.showReplyForm" class="reply-form">
@@ -81,19 +84,21 @@
                   </a-form>
                 </div>
                 <a-list
-                  v-if="item.children && item.children.length"
+                  v-if="item.showChildren && item.children.length"
                   class="comment-reply-list"
                   :data-source="item.children"
                 >
                   <template #renderItem="{ item: childItem }">
                     <a-list-item>
                       <a-comment>
+                        <!--
                         <template #avatar>
                           <a-avatar
                             :src="childItem.avatar"
                             :alt="childItem.author"
                           />
                         </template>
+                        -->
                         <template #author>
                           <a>{{ childItem.author }}</a>
                         </template>
@@ -164,19 +169,72 @@ const afterVisibleChange = (val: boolean) => {
   }
 };
 
+const buildCommentTree = (comments) => {
+  const commentMap = new Map();
+  const rootComments = [];
+
+  // 首先创建一个以评论ID为键的Map
+  comments.forEach((comment) => {
+    comment.children = [];
+    commentMap.set(comment.id, comment);
+  });
+
+  // 构建树形结构
+  comments.forEach((comment) => {
+    if (comment.rootId === "0") {
+      rootComments.push(comment);
+    } else {
+      const parent = commentMap.get(comment.rootId);
+      if (parent) {
+        parent.children.push(comment);
+      }
+    }
+  });
+
+  return rootComments;
+};
+
 const loadComments = async () => {
   if (!props.post) return;
   try {
     const res = await myAxios.get("/comment/list", {
       params: {
         objId: String(props.post.id),
+        parentId: "0",
         pageSize: 10,
         pageNum: 1,
       },
     });
-    comments.value = res.data || [];
+    comments.value = (res.data || []).map(comment => ({
+      ...comment,
+      showChildren: false,
+      children: []
+    }));
   } catch (error) {
     console.error("Failed to load comments:", error);
+  }
+};
+
+const loadChildComments = async (parentComment) => {
+  try {
+    const res = await myAxios.get("/comment/list", {
+      params: {
+        objId: String(props.post.id),
+        parentId: parentComment.id,
+        pageSize: 10,
+        pageNum: 1,
+      },
+    });
+    parentComment.children = res.data || [];
+  } catch (error) {
+    console.error("Failed to load child comments:", error);
+  }
+};
+
+const toggleChildren = async (comment) => {
+  comment.showChildren = !comment.showChildren;
+  if (comment.showChildren && comment.children.length === 0) {
+    await loadChildComments(comment);
   }
 };
 
@@ -233,37 +291,101 @@ const submitReply = async (parentComment) => {
 
 <style scoped>
 .post-title {
-  font-size: 1.5em;
-  font-weight: bold;
-  margin-bottom: 1em;
+  font-size: 1.8em;
+  font-weight: 600;
+  margin-bottom: 1.2em;
+  color: #2c3e50;
 }
 
 .post-content {
-  margin-bottom: 2em;
-  line-height: 1.6;
+  margin-bottom: 2.5em;
+  line-height: 1.8;
+  color: #34495e;
 }
 
 .comments-section {
-  margin-top: 2em;
+  margin-top: 2.5em;
 }
 
 .comment-list {
-  margin-top: 1em;
+  margin-top: 1.5em;
+}
+
+.comment-list :deep(.ant-list-item) {
+  padding: 16px;
+  margin-bottom: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.comment-list :deep(.ant-list-item:hover) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.comment-list :deep(.ant-comment-content-author) {
+  margin-bottom: 8px;
+}
+
+.comment-list :deep(.ant-comment-content-author-name) {
+  color: #1890ff;
+  font-weight: 500;
+}
+
+.comment-list :deep(.ant-comment-content-detail) {
+  color: #4a5568;
 }
 
 .comment-reply-list {
-  margin-left: 2em;
-  border-left: 2px solid #f0f0f0;
-  padding-left: 1em;
-  background-color: #fafafa;
-  border-radius: 4px;
+  margin: 16px 0 8px 48px;
+  border-left: 3px solid #1890ff;
+  padding-left: 16px;
+  background-color: #f8fafc;
+  border-radius: 0 8px 8px 0;
 }
 
 .comment-form {
-  margin-bottom: 2em;
+  margin-bottom: 2.5em;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
 }
 
 .reply-form {
-  margin: 1em 0;
+  margin: 16px 0;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+:deep(.ant-form-item-control-input-content) .ant-btn {
+  border-radius: 4px;
+  height: 32px;
+  padding: 0 16px;
+  font-weight: 500;
+}
+
+:deep(.ant-form-item-control-input-content) .ant-btn-primary {
+  background: #1890ff;
+  border-color: #1890ff;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
+}
+
+:deep(.ant-form-item-control-input-content) .ant-btn-primary:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+:deep(.ant-textarea) {
+  border-radius: 4px;
+  resize: none;
+  transition: all 0.3s ease;
+}
+
+:deep(.ant-textarea:hover),
+:deep(.ant-textarea:focus) {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
 </style>
