@@ -107,106 +107,17 @@
                     </a-form-item>
                   </a-form>
                 </div>
-                <a-list
-                  v-if="item.showChildren && item.children.length"
-                  class="comment-reply-list"
-                  :data-source="item.children"
-                  @scroll="handleChildCommentsScroll($event, item)"
-                >
-                  <template #renderItem="{ item: childItem }">
-                    <a-list-item>
-                      <a-comment>
-                        <template #avatar>
-                          <a-avatar
-                            :src="childItem.avatar"
-                            :alt="childItem.author"
-                          />
-                        </template>
-                        <template #author>
-                          <div class="reply-to" v-if="childItem.parentAuthor">
-                            <span class="reply-author">
-                              {{ childItem.author }} <a>回复</a
-                              >{{ childItem.parentAuthor }}</span
-                            >
-                          </div>
-                        </template>
-                        <template #content>
-                          <div class="comment-content">
-                            <p
-                              v-if="
-                                !childItem.isExpanded &&
-                                childItem.content.length > 200
-                              "
-                            >
-                              {{ childItem.content.slice(0, 200) }}...
-                              <a-button
-                                type="link"
-                                @click="expandComment(childItem)"
-                                >查看全文</a-button
-                              >
-                            </p>
-                            <p v-else class="expanded-content">
-                              {{ childItem.content }}
-                              <a-button
-                                v-if="childItem.content.length > 200"
-                                type="link"
-                                @click="collapseComment(childItem)"
-                                >收起</a-button
-                              >
-                            </p>
-                            <div class="comment-info">
-                              <span class="comment-time">{{
-                                childItem.gmtCreate
-                              }}</span>
-                              <span class="comment-ip"
-                                >IP: {{ childItem.ip }}</span
-                              >
-                            </div>
-                          </div>
-                        </template>
-                        <template #datetime>
-                          <span>{{ childItem.datetime }}</span>
-                        </template>
-                        <template #actions>
-                          <span
-                            @click="toggleReply(childItem)"
-                            style="margin-right: 16px"
-                            >回复</span
-                          >
-                        </template>
-                        <!-- 回复表单 -->
-                        <div v-if="childItem.showReplyForm" class="reply-form">
-                          <a-form
-                            :model="replyForm"
-                            @submit.prevent="submitReply(childItem)"
-                          >
-                            <a-form-item>
-                              <a-textarea
-                                v-model:value="replyForm.content"
-                                :rows="2"
-                                placeholder="回复评论..."
-                              />
-                            </a-form-item>
-                            <a-form-item>
-                              <a-button
-                                type="primary"
-                                html-type="submit"
-                                size="small"
-                                >提交回复</a-button
-                              >
-                              <a-button
-                                @click="cancelReply(childItem)"
-                                size="small"
-                                style="margin-left: 8px"
-                                >取消</a-button
-                              >
-                            </a-form-item>
-                          </a-form>
-                        </div>
-                      </a-comment>
-                    </a-list-item>
-                  </template>
-                </a-list>
+                <CommentReplyList
+                  :show-children="item.showChildren"
+                  :children="item.children"
+                  :has-more="item.hasMore"
+                  @expand-comment="expandComment"
+                  @collapse-comment="collapseComment"
+                  @toggle-reply="toggleReply"
+                  @cancel-reply="cancelReply"
+                  @submit-reply="({ comment, content }) => submitReply(comment)"
+                  @scroll="(event) => handleChildCommentsScroll(event, item)"
+                />
               </a-comment>
             </a-list-item>
           </template>
@@ -220,6 +131,7 @@
 import { ref, defineProps, defineEmits, watch } from "vue";
 import MyDivider from "@/components/MyDivider.vue";
 import myAxios from "@/plugins/myAxios";
+import CommentReplyList from "@/components/CommentReplyList.vue";
 
 interface Post {
   id: number;
@@ -434,13 +346,6 @@ const submitReply = async (parentComment) => {
   width: 100%;
 }
 
-.comment-reply-list {
-  width: 100%;
-  margin-left: 44px;
-  border-left: 2px solid #f0f0f0;
-  padding-left: 16px;
-}
-
 .comment-content {
   position: relative;
   background: #fafafa;
@@ -496,16 +401,6 @@ const submitReply = async (parentComment) => {
   white-space: pre-wrap;
 }
 
-.reply-to {
-  color: #8c8c8c;
-  margin-bottom: 4px;
-  font-size: 14px;
-}
-
-.reply-author {
-  color: #8c8c8c;
-  font-weight: 500;
-}
 .comment-info {
   margin-bottom: 8px;
   font-size: 12px;
