@@ -46,7 +46,24 @@
                   <a>{{ item.author }}</a>
                 </template>
                 <template #content>
-                  <p>{{ item.content }}</p>
+                  <div class="comment-content">
+                    <p v-if="!item.isExpanded && item.content.length > 200">
+                      {{ item.content.slice(0, 200) }}...
+                      <a-button type="link" @click="expandComment(item)"
+                        >查看全文</a-button
+                      >
+                    </p>
+                    <p v-else class="expanded-content">
+                      {{ item.content }}
+                      <a-button
+                        v-if="item.content.length > 200"
+                        type="link"
+                        @click="collapseComment(item)"
+                      >
+                        收起
+                      </a-button>
+                    </p>
+                  </div>
                 </template>
                 <template #datetime>
                   <span>{{ item.datetime }}</span>
@@ -174,6 +191,14 @@ const afterVisibleChange = (val: boolean) => {
   }
 };
 
+const expandComment = (comment) => {
+  comment.isExpanded = true;
+};
+
+const collapseComment = (comment) => {
+  comment.isExpanded = false;
+};
+
 const loadComments = async () => {
   if (!props.post) return;
   try {
@@ -189,6 +214,7 @@ const loadComments = async () => {
       ...comment,
       showChildren: false,
       children: [],
+      isExpanded: false, // 添加这行
     }));
   } catch (error) {
     console.error("Failed to load comments:", error);
@@ -409,5 +435,14 @@ const submitReply = async (parentComment) => {
 :deep(.ant-textarea:focus) {
   border-color: #40a9ff;
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.comment-content {
+  width: 100%;
+  word-break: break-word;
+}
+
+.expanded-content {
+  white-space: pre-wrap;
 }
 </style>
