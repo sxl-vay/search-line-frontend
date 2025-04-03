@@ -3,7 +3,7 @@
     v-model:visible="visible"
     title="文章详情"
     placement="right"
-    width="600"
+    width="800"
     @after-visible-change="afterVisibleChange"
   >
     <template v-if="post">
@@ -47,10 +47,6 @@
                 </template>
                 <template #content>
                   <div class="comment-content">
-                    <div class="comment-info">
-                      <span class="comment-time">{{ item.gmtCreate }}</span>
-                      <span class="comment-ip">IP: {{ item.ip }}</span>
-                    </div>
                     <p v-if="!item.isExpanded && item.content.length > 200">
                       {{ item.content.slice(0, 200) }}...
                       <a-button type="link" @click="expandComment(item)"
@@ -66,6 +62,10 @@
                         >收起</a-button
                       >
                     </p>
+                    <div class="comment-info">
+                      <span class="comment-time">{{ item.gmtCreate }}</span>
+                      <span class="comment-ip">IP: {{ item.ip }}</span>
+                    </div>
                   </div>
                 </template>
                 <template #datetime>
@@ -123,25 +123,15 @@
                           />
                         </template>
                         <template #author>
-                          <a>{{ childItem.author }}</a>
+                          <div class="reply-to" v-if="childItem.parentAuthor">
+                            <span class="reply-author">
+                              {{ childItem.author }} <a>回复</a
+                              >{{ childItem.parentAuthor }}</span
+                            >
+                          </div>
                         </template>
                         <template #content>
                           <div class="comment-content">
-                            <div class="comment-info">
-                              <span class="comment-time">{{
-                                childItem.gmtCreate
-                              }}</span>
-                              <span class="comment-ip"
-                                >IP: {{ childItem.ip }}</span
-                              >
-                            </div>
-                            <div class="reply-to" v-if="childItem.parentAuthor">
-                              回复
-                              <span class="reply-author">{{
-                                childItem.parentAuthor
-                              }}</span>
-                              >
-                            </div>
                             <p
                               v-if="
                                 !childItem.isExpanded &&
@@ -164,6 +154,14 @@
                                 >收起</a-button
                               >
                             </p>
+                            <div class="comment-info">
+                              <span class="comment-time">{{
+                                childItem.gmtCreate
+                              }}</span>
+                              <span class="comment-ip"
+                                >IP: {{ childItem.ip }}</span
+                              >
+                            </div>
                           </div>
                         </template>
                         <template #datetime>
@@ -317,7 +315,7 @@ const loadChildComments = (parentComment) => {
     .get("/comment/list", {
       params: {
         objId: String(props.post.id),
-        rootId: parentComment.id,
+        parentId: parentComment.id,
         pageSize: 10,
         pageNum: parentComment.currentPage,
       },
