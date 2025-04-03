@@ -91,6 +91,7 @@
                   v-if="item.showChildren && item.children.length"
                   class="comment-reply-list"
                   :data-source="item.children"
+                  @scroll="handleChildCommentsScroll($event, item)"
                 >
                   <template #renderItem="{ item: childItem }">
                     <a-list-item>
@@ -196,23 +197,47 @@ const loadComments = async () => {
 
 const loadChildComments = async (parentComment) => {
   try {
+    if (!parentComment.currentPage) {
+      parentComment.currentPage = 1;
+      parentComment.hasMore = true;
+    }
+    if (!parentComment.hasMore) return;
+
     const res = await myAxios.get("/comment/list", {
       params: {
         objId: String(props.post.id),
         rootId: parentComment.id,
         pageSize: 10,
-        pageNum: 1,
+        pageNum: parentComment.currentPage,
       },
     });
-    parentComment.children = res.data || [];
+    const newComments = res.data || [];
+    if (newComments.length < 10) {
+      parentComment.hasMore = false;
+    }
+    if (parentComment.currentPage === 1) {
+      parentComment.children = newComments;
+    } else {
+      parentComment.children = [...parentComment.children, ...newComments];
+    }
+    parentComment.currentPage++;
   } catch (error) {
     console.error("Failed to load child comments:", error);
+  }
+};
+
+const handleChildCommentsScroll = async (event, comment) => {
+  const { scrollHeight, scrollTop, clientHeight } = event.target;
+  if (scrollHeight - scrollTop - clientHeight < 50 && comment.hasMore) {
+    await loadChildComments(comment);
   }
 };
 
 const toggleChildren = async (comment) => {
   comment.showChildren = !comment.showChildren;
   if (comment.showChildren && comment.children.length === 0) {
+    comment.currentPage = 1;
+    comment.hasMore = true;
     await loadChildComments(comment);
   }
 };
@@ -322,6 +347,24 @@ const submitReply = async (parentComment) => {
   padding-left: 16px;
   background-color: #f8fafc;
   border-radius: 0 8px 8px 0;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #1890ff #f0f0f0;
+}
+
+.comment-reply-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.comment-reply-list::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 3px;
+}
+
+.comment-reply-list::-webkit-scrollbar-thumb {
+  background-color: #1890ff;
+  border-radius: 3px;
 }
 
 .comment-form {
