@@ -426,70 +426,37 @@ const submitReply = async (parentComment) => {
   margin-top: 1.5em;
 }
 
-.comment-list :deep(.ant-list-item) {
-  padding: 16px;
-  margin-bottom: 16px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
+.comment-list .ant-list-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-.comment-list :deep(.ant-list-item:hover) {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.comment-list :deep(.ant-comment-content-author) {
-  margin-bottom: 8px;
-}
-
-.comment-list :deep(.ant-comment-content-author-name) {
-  color: #1890ff;
-  font-weight: 500;
-}
-
-.comment-list :deep(.ant-comment-content-detail) {
-  color: #4a5568;
+.comment-list .ant-comment {
+  width: 100%;
 }
 
 .comment-reply-list {
-  margin: 16px 0 8px 48px;
-  border-left: 3px solid #1890ff;
+  width: 100%;
+  margin-left: 44px;
+  border-left: 2px solid #f0f0f0;
   padding-left: 16px;
-  background-color: #f8fafc;
-  border-radius: 0 8px 8px 0;
-  max-height: 300px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #1890ff #f0f0f0;
 }
 
-.comment-reply-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.comment-reply-list::-webkit-scrollbar-track {
-  background: #f0f0f0;
-  border-radius: 3px;
-}
-
-.comment-reply-list::-webkit-scrollbar-thumb {
-  background-color: #1890ff;
-  border-radius: 3px;
-}
-
-.comment-form {
-  margin-bottom: 2.5em;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 8px;
+.comment-content {
+  position: relative;
+  background: #fafafa;
+  padding: 12px;
+  border-radius: 4px;
+  margin-top: 8px;
 }
 
 .reply-form {
-  margin: 16px 0;
+  margin-top: 16px;
+  margin-bottom: 16px;
   padding: 16px;
-  background: #f8fafc;
-  border-radius: 8px;
+  background: #fafafa;
+  border-radius: 4px;
 }
 
 :deep(.ant-form-item-control-input-content) .ant-btn {
