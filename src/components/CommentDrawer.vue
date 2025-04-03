@@ -125,7 +125,31 @@
                           <a>{{ childItem.author }}</a>
                         </template>
                         <template #content>
-                          <p>{{ childItem.content }}</p>
+                          <div class="comment-content">
+                            <p
+                              v-if="
+                                !childItem.isExpanded &&
+                                childItem.content.length > 200
+                              "
+                            >
+                              {{ childItem.content.slice(0, 200) }}...
+                              <a-button
+                                type="link"
+                                @click="expandComment(childItem)"
+                                >查看全文</a-button
+                              >
+                            </p>
+                            <p v-else class="expanded-content">
+                              {{ childItem.content }}
+                              <a-button
+                                v-if="childItem.content.length > 200"
+                                type="link"
+                                @click="collapseComment(childItem)"
+                              >
+                                收起
+                              </a-button>
+                            </p>
+                          </div>
                         </template>
                         <template #datetime>
                           <span>{{ childItem.datetime }}</span>
