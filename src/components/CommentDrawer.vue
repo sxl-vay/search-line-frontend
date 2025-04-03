@@ -173,31 +173,6 @@ const afterVisibleChange = (val: boolean) => {
   }
 };
 
-const buildCommentTree = (comments) => {
-  const commentMap = new Map();
-  const rootComments = [];
-
-  // 首先创建一个以评论ID为键的Map
-  comments.forEach((comment) => {
-    comment.children = [];
-    commentMap.set(comment.id, comment);
-  });
-
-  // 构建树形结构
-  comments.forEach((comment) => {
-    if (comment.rootId === "0") {
-      rootComments.push(comment);
-    } else {
-      const parent = commentMap.get(comment.rootId);
-      if (parent) {
-        parent.children.push(comment);
-      }
-    }
-  });
-
-  return rootComments;
-};
-
 const loadComments = async () => {
   if (!props.post) return;
   try {
