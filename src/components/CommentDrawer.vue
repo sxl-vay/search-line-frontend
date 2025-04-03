@@ -113,19 +113,24 @@
                   <template #renderItem="{ item: childItem }">
                     <a-list-item>
                       <a-comment>
-                        <!--
                         <template #avatar>
                           <a-avatar
                             :src="childItem.avatar"
                             :alt="childItem.author"
                           />
                         </template>
-                        -->
                         <template #author>
                           <a>{{ childItem.author }}</a>
                         </template>
                         <template #content>
                           <div class="comment-content">
+                            <div class="reply-to" v-if="childItem.parentAuthor">
+                              回复
+                              <span class="reply-author">{{
+                                childItem.parentAuthor
+                              }}</span>
+                              >
+                            </div>
                             <p
                               v-if="
                                 !childItem.isExpanded &&
@@ -154,6 +159,42 @@
                         <template #datetime>
                           <span>{{ childItem.datetime }}</span>
                         </template>
+                        <template #actions>
+                          <span
+                            @click="toggleReply(childItem)"
+                            style="margin-right: 16px"
+                            >回复</span
+                          >
+                        </template>
+                        <!-- 回复表单 -->
+                        <div v-if="childItem.showReplyForm" class="reply-form">
+                          <a-form
+                            :model="replyForm"
+                            @submit.prevent="submitReply(childItem)"
+                          >
+                            <a-form-item>
+                              <a-textarea
+                                v-model:value="replyForm.content"
+                                :rows="2"
+                                placeholder="回复评论..."
+                              />
+                            </a-form-item>
+                            <a-form-item>
+                              <a-button
+                                type="primary"
+                                html-type="submit"
+                                size="small"
+                                >提交回复</a-button
+                              >
+                              <a-button
+                                @click="cancelReply(childItem)"
+                                size="small"
+                                style="margin-left: 8px"
+                                >取消</a-button
+                              >
+                            </a-form-item>
+                          </a-form>
+                        </div>
                       </a-comment>
                     </a-list-item>
                   </template>
@@ -245,35 +286,50 @@ const loadComments = async () => {
   }
 };
 
-const loadChildComments = async (parentComment) => {
-  try {
-    if (!parentComment.currentPage) {
-      parentComment.currentPage = 1;
-      parentComment.hasMore = true;
+const findParentAuthor = (comment, commentList) => {
+  //遍历children
+  for (const child of commentList) {
+    if (child.id === comment.parentId) {
+      return child.author;
     }
-    if (!parentComment.hasMore) return;
+  }
+  return "";
+};
 
-    const res = await myAxios.get("/comment/list", {
+const loadChildComments = (parentComment) => {
+  if (!parentComment.currentPage) {
+    parentComment.currentPage = 1;
+    parentComment.hasMore = true;
+  }
+  if (!parentComment.hasMore) return;
+
+  myAxios
+    .get("/comment/list", {
       params: {
         objId: String(props.post.id),
         rootId: parentComment.id,
         pageSize: 10,
         pageNum: parentComment.currentPage,
       },
+    })
+    .then((res) => {
+      const newComments = (res.data || []).map((comment) => ({
+        ...comment,
+        parentAuthor: findParentAuthor(comment, res.data),
+      }));
+      if (newComments.length < 10) {
+        parentComment.hasMore = false;
+      }
+      if (parentComment.currentPage === 1) {
+        parentComment.children = newComments;
+      } else {
+        parentComment.children = [...parentComment.children, ...newComments];
+      }
+      parentComment.currentPage++;
+    })
+    .catch((error) => {
+      console.error("Failed to load child comments:", error);
     });
-    const newComments = res.data || [];
-    if (newComments.length < 10) {
-      parentComment.hasMore = false;
-    }
-    if (parentComment.currentPage === 1) {
-      parentComment.children = newComments;
-    } else {
-      parentComment.children = [...parentComment.children, ...newComments];
-    }
-    parentComment.currentPage++;
-  } catch (error) {
-    console.error("Failed to load child comments:", error);
-  }
 };
 
 const handleChildCommentsScroll = async (event, comment) => {
@@ -321,11 +377,6 @@ const cancelReply = (comment) => {
 const submitReply = async (parentComment) => {
   if (!props.post || !replyForm.value.content.trim()) return;
   try {
-    console.log("parentComment::", parentComment);
-    console.log(
-      "parentComment.rootId::",
-      parentComment.rootId === "0" ? parentComment.id : parentComment.rootId
-    );
     await myAxios.post("/comment/reply", {
       objId: String(props.post.id),
       userId: 1,
@@ -468,5 +519,16 @@ const submitReply = async (parentComment) => {
 
 .expanded-content {
   white-space: pre-wrap;
+}
+
+.reply-to {
+  color: #8c8c8c;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.reply-author {
+  color: #8c8c8c;
+  font-weight: 500;
 }
 </style>
