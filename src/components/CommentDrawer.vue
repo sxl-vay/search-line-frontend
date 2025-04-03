@@ -132,6 +132,7 @@ import { ref, defineProps, defineEmits, watch } from "vue";
 import MyDivider from "@/components/MyDivider.vue";
 import myAxios from "@/plugins/myAxios";
 import CommentReplyList from "@/components/CommentReplyList.vue";
+import { CommentService, type Comment } from "@/services/CommentService";
 
 interface Post {
   id: number;
@@ -186,70 +187,12 @@ const collapseComment = (comment) => {
 
 const loadComments = async () => {
   if (!props.post) return;
-  try {
-    const res = await myAxios.get("/comment/list", {
-      params: {
-        objId: String(props.post.id),
-        rootId: "0",
-        pageSize: 10,
-        pageNum: 1,
-      },
-    });
-    comments.value = (res.data || []).map((comment) => ({
-      ...comment,
-      showChildren: false,
-      children: [],
-      isExpanded: false, // 添加这行
-    }));
-  } catch (error) {
-    console.error("Failed to load comments:", error);
-  }
+  comments.value = await CommentService.loadComments(props.post.id);
 };
 
-const findParentAuthor = (comment, commentList) => {
-  //遍历children
-  for (const child of commentList) {
-    if (child.id === comment.parentId) {
-      return child.author;
-    }
-  }
-  return "";
-};
-
-const loadChildComments = (parentComment) => {
-  if (!parentComment.currentPage) {
-    parentComment.currentPage = 1;
-    parentComment.hasMore = true;
-  }
-  if (!parentComment.hasMore) return;
-
-  myAxios
-    .get("/comment/list", {
-      params: {
-        objId: String(props.post.id),
-        parentId: parentComment.id,
-        pageSize: 10,
-        pageNum: parentComment.currentPage,
-      },
-    })
-    .then((res) => {
-      const newComments = (res.data || []).map((comment) => ({
-        ...comment,
-        parentAuthor: findParentAuthor(comment, res.data),
-      }));
-      if (newComments.length < 10) {
-        parentComment.hasMore = false;
-      }
-      if (parentComment.currentPage === 1) {
-        parentComment.children = newComments;
-      } else {
-        parentComment.children = [...parentComment.children, ...newComments];
-      }
-      parentComment.currentPage++;
-    })
-    .catch((error) => {
-      console.error("Failed to load child comments:", error);
-    });
+const loadChildComments = async (parentComment) => {
+  if (!props.post) return;
+  await CommentService.loadChildComments(props.post.id, parentComment);
 };
 
 const handleChildCommentsScroll = async (event, comment) => {
