@@ -47,6 +47,10 @@
                 </template>
                 <template #content>
                   <div class="comment-content">
+                    <div class="comment-info">
+                      <span class="comment-time">{{ item.gmtCreate }}</span>
+                      <span class="comment-ip">IP: {{ item.ip }}</span>
+                    </div>
                     <p v-if="!item.isExpanded && item.content.length > 200">
                       {{ item.content.slice(0, 200) }}...
                       <a-button type="link" @click="expandComment(item)"
@@ -59,9 +63,8 @@
                         v-if="item.content.length > 200"
                         type="link"
                         @click="collapseComment(item)"
+                        >收起</a-button
                       >
-                        收起
-                      </a-button>
                     </p>
                   </div>
                 </template>
@@ -124,6 +127,14 @@
                         </template>
                         <template #content>
                           <div class="comment-content">
+                            <div class="comment-info">
+                              <span class="comment-time">{{
+                                childItem.gmtCreate
+                              }}</span>
+                              <span class="comment-ip"
+                                >IP: {{ childItem.ip }}</span
+                              >
+                            </div>
                             <div class="reply-to" v-if="childItem.parentAuthor">
                               回复
                               <span class="reply-author">{{
@@ -150,9 +161,8 @@
                                 v-if="childItem.content.length > 200"
                                 type="link"
                                 @click="collapseComment(childItem)"
+                                >收起</a-button
                               >
-                                收起
-                              </a-button>
                             </p>
                           </div>
                         </template>
@@ -530,5 +540,18 @@ const submitReply = async (parentComment) => {
 .reply-author {
   color: #8c8c8c;
   font-weight: 500;
+}
+.comment-info {
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.comment-time {
+  margin-right: 16px;
+}
+
+.comment-ip {
+  color: #a6a6a6;
 }
 </style>
