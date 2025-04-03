@@ -4,7 +4,7 @@
       <a-list-item>
         <a-list-item-meta :description="item.content">
           <template #title>
-            <a href="https://www.antdv.com/">{{ item.title }}</a>
+            <a @click="showComments(item)">{{ item.title }}</a>
           </template>
           <template #avatar>
             <a-avatar :src="gege" />
@@ -13,11 +13,14 @@
       </a-list-item>
     </template>
   </a-list>
+
+  <CommentDrawer v-model:visible="drawerVisible" :post="currentPost" />
 </template>
 
 <script setup lang="ts">
 import gege from "../assets/gege.jpg";
-import { withDefaults, defineProps } from "vue";
+import { withDefaults, defineProps, ref } from "vue";
+import CommentDrawer from "@/components/CommentDrawer.vue";
 
 interface Post {
   id: number;
@@ -35,10 +38,12 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   postList: () => [],
 });
-</script>
 
-<style scoped>
-.gege {
-  width: 200px;
-}
-</style>
+const drawerVisible = ref(false);
+const currentPost = ref<Post | null>(null);
+
+const showComments = (post: Post) => {
+  currentPost.value = post;
+  drawerVisible.value = true;
+};
+</script>
