@@ -52,9 +52,13 @@
                   <span>{{ item.datetime }}</span>
                 </template>
                 <template #actions>
-                  <span @click="toggleReply(item)" style="margin-right: 16px;">回复</span>
+                  <span @click="toggleReply(item)" style="margin-right: 16px"
+                    >回复</span
+                  >
                   <span @click="toggleChildren(item)">
-                    {{ item.showChildren ? '收起' : '展开' }} ({{ item.children.length }})
+                    {{ item.showChildren ? "收起" : "展开" }} ({{
+                      item.children.length
+                    }})
                   </span>
                 </template>
                 <!-- 回复表单 -->
@@ -200,15 +204,15 @@ const loadComments = async () => {
     const res = await myAxios.get("/comment/list", {
       params: {
         objId: String(props.post.id),
-        parentId: "0",
+        rootId: "0",
         pageSize: 10,
         pageNum: 1,
       },
     });
-    comments.value = (res.data || []).map(comment => ({
+    comments.value = (res.data || []).map((comment) => ({
       ...comment,
       showChildren: false,
-      children: []
+      children: [],
     }));
   } catch (error) {
     console.error("Failed to load comments:", error);
@@ -220,7 +224,7 @@ const loadChildComments = async (parentComment) => {
     const res = await myAxios.get("/comment/list", {
       params: {
         objId: String(props.post.id),
-        parentId: parentComment.id,
+        rootId: parentComment.id,
         pageSize: 10,
         pageNum: 1,
       },
