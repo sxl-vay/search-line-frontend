@@ -209,11 +209,17 @@ const cancelReply = (comment) => {
 const submitReply = async (parentComment) => {
   if (!props.post || !replyForm.value.content.trim()) return;
   try {
+    console.log("parentComment::", parentComment);
+    console.log(
+      "parentComment.rootId::",
+      parentComment.rootId === "0" ? parentComment.id : parentComment.rootId
+    );
     await myAxios.post("/comment/reply", {
       objId: String(props.post.id),
       userId: 1,
       content: replyForm.value.content,
-      rootId: parentComment.rootId || parentComment.id,
+      rootId:
+        parentComment.rootId === "0" ? parentComment.id : parentComment.rootId,
       parentId: parentComment.id,
     });
     replyForm.value.content = "";
@@ -247,6 +253,10 @@ const submitReply = async (parentComment) => {
 
 .comment-reply-list {
   margin-left: 2em;
+  border-left: 2px solid #f0f0f0;
+  padding-left: 1em;
+  background-color: #fafafa;
+  border-radius: 4px;
 }
 
 .comment-form {
