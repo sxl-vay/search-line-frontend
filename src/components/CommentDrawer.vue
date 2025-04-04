@@ -79,7 +79,7 @@
                   >
                   <span @click="toggleChildren(item)">
                     {{ item.showChildren ? "收起" : "展开" }} ({{
-                      item.children.length
+                      item.subCommentCount
                     }})
                   </span>
                 </template>
