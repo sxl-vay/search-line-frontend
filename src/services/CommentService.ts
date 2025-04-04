@@ -16,6 +16,7 @@ export interface Comment {
   hasMore?: boolean;
   currentPage?: number;
   parentAuthor?: string;
+  loading?: boolean;
 }
 
 export class CommentService {
@@ -48,44 +49,52 @@ export class CommentService {
 
   static async loadChildComments(
     objId: string | number,
-    parentComment: Comment
-  ): Promise<void> {
-    if (!parentComment.currentPage) {
-      parentComment.currentPage = 1;
-      parentComment.hasMore = true;
-    }
-    if (!parentComment.hasMore) return;
-
+    rootId: string | number,
+    pageSize = 10,
+    pageNum = 1
+  ): Promise<Comment[]> {
     try {
       const res = await myAxios.get("/comment/list", {
         params: {
           objId: String(objId),
-          parentId: parentComment.id,
-          pageSize: 10,
-          pageNum: parentComment.currentPage,
+          rootId,
+          pageSize,
+          pageNum,
         },
       });
 
-      const newComments = (res.data || []).map((comment: Comment) => ({
+      const comments = (res.data || []).map((comment: Comment) => ({
         ...comment,
         parentAuthor: this.findParentAuthor(comment, res.data),
+        loading: false,
+        hasMore: true,
+        currentPage: 1,
       }));
 
-      if (newComments.length < 10) {
-        parentComment.hasMore = false;
-      }
-
-      if (parentComment.currentPage === 1) {
-        parentComment.children = newComments;
-      } else {
-        parentComment.children = [
-          ...(parentComment.children || []),
-          ...newComments,
-        ];
-      }
-      parentComment.currentPage++;
+      return comments;
     } catch (error) {
       console.error("Failed to load child comments:", error);
+      return [];
+    }
+  }
+
+  static async createReply(params: {
+    objId: string | number;
+    content: string;
+    parentId?: string | number;
+    rootId?: string | number;
+  }): Promise<Comment | null> {
+    try {
+      const res = await myAxios.post("/comment/reply", {
+        objId: String(params.objId),
+        content: params.content,
+        parentId: params.parentId || "0",
+        rootId: params.rootId || "0",
+      });
+      return res.data;
+    } catch (error) {
+      console.error("Failed to create reply:", error);
+      return null;
     }
   }
 

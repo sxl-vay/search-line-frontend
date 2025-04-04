@@ -80,6 +80,7 @@
 
 <script setup lang="ts">
 import { ref, defineProps, defineEmits } from "vue";
+import { CommentService } from "@/services/CommentService";
 
 interface Props {
   showChildren: boolean;
@@ -118,10 +119,27 @@ const cancelReply = (comment: any) => {
   replyForm.value.content = "";
 };
 
-const handleReply = (comment: any) => {
+const loading = ref(false);
+
+const handleReply = async (comment: any) => {
   if (!replyForm.value.content.trim()) return;
-  emit("submit-reply", { comment, content: replyForm.value.content });
-  replyForm.value.content = "";
+  loading.value = true;
+  try {
+    const result = await CommentService.createReply({
+      objId: comment.objId,
+      content: replyForm.value.content,
+      parentId: comment.id,
+      rootId: comment.rootId || comment.id,
+    });
+    if (result) {
+      emit("submit-reply", { comment, content: replyForm.value.content });
+      replyForm.value.content = "";
+    }
+  } catch (error) {
+    console.error("Failed to reply comment:", error);
+  } finally {
+    loading.value = false;
+  }
 };
 
 const handleChildCommentsScroll = (event: any) => {
@@ -135,6 +153,24 @@ const handleChildCommentsScroll = (event: any) => {
   margin-left: 44px;
   border-left: 2px solid #f0f0f0;
   padding-left: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #d9d9d9 #f5f5f5;
+}
+
+.comment-reply-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.comment-reply-list::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border-radius: 3px;
+}
+
+.comment-reply-list::-webkit-scrollbar-thumb {
+  background-color: #d9d9d9;
+  border-radius: 3px;
 }
 
 .comment-content {

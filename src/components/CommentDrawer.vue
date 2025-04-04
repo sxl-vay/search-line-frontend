@@ -192,7 +192,37 @@ const loadComments = async () => {
 
 const loadChildComments = async (parentComment) => {
   if (!props.post) return;
-  await CommentService.loadChildComments(props.post.id, parentComment);
+  if (!parentComment.currentPage) {
+    parentComment.currentPage = 1;
+    parentComment.hasMore = true;
+  }
+  if (!parentComment.hasMore || parentComment.loading) return;
+
+  try {
+    parentComment.loading = true;
+    const newComments = await CommentService.loadChildComments(
+      props.post.id,
+      parentComment.id,
+      10,
+      parentComment.currentPage
+    );
+
+    if (newComments.length < 10) {
+      parentComment.hasMore = false;
+    }
+
+    if (parentComment.currentPage === 1) {
+      parentComment.children = newComments;
+    } else {
+      parentComment.children = [
+        ...(parentComment.children || []),
+        ...newComments,
+      ];
+    }
+    parentComment.currentPage++;
+  } finally {
+    parentComment.loading = false;
+  }
 };
 
 const handleChildCommentsScroll = async (event, comment) => {
