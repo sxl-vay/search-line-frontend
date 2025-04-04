@@ -102,11 +102,39 @@ export class CommentService {
     comment: Comment,
     commentList: Comment[]
   ): string {
-    for (const item of commentList) {
-      if (item.id === comment.parentId) {
-        return item.author;
-      }
+    if (!comment.parentId || comment.parentId === "0") return "";
+    const parent = commentList.find((c) => c.id === comment.parentId);
+    return parent ? parent.author : "";
+  }
+
+  static async getCommentCount(
+    objId: string
+  ): Promise<{ objAllCommentCount: number; rootCommentCount: number }> {
+    try {
+      const [rootCountRes, replyCountRes] = await Promise.all([
+        myAxios.get(`/comment/count/${objId}`),
+        myAxios.get(`/comment/count/${objId}/0`),
+      ]);
+      return {
+        objAllCommentCount: rootCountRes.data || 0,
+        rootCommentCount: replyCountRes.data || 0,
+      };
+    } catch (error) {
+      console.error("Failed to get comment count:", error);
+      return { objAllCommentCount: 0, rootCommentCount: 0 };
     }
-    return "";
+  }
+
+  static async getRootCommentRepliesCount(
+    objId: string,
+    rootId: string | number
+  ): Promise<number> {
+    try {
+      const res = await myAxios.get(`/comment/count/${objId}/${rootId}`);
+      return res.data || 0;
+    } catch (error) {
+      console.error("Failed to get root comment replies count:", error);
+      return 0;
+    }
   }
 }

@@ -33,7 +33,7 @@
         <a-list
           class="comment-list"
           :data-source="comments"
-          :header="`${comments.length} 条评论`"
+          :header="`${commentCounts.objAllCommentCount} 条root评论`"
           item-layout="horizontal"
         >
           <template #renderItem="{ item }">
@@ -153,6 +153,10 @@ const emit = defineEmits(["update:visible"]);
 
 const visible = ref(props.visible);
 const comments = ref([]);
+const commentCounts = ref({
+  objAllCommentCount: 0,
+  rootCommentCount: 0,
+});
 const commentForm = ref({
   content: "",
 });
@@ -171,9 +175,11 @@ watch(visible, (newVal) => {
   emit("update:visible", newVal);
 });
 
-const afterVisibleChange = (val: boolean) => {
+const afterVisibleChange = async (val: boolean) => {
   if (val && props.post) {
     loadComments();
+    const counts = await CommentService.getCommentCount(props.post.id);
+    commentCounts.value = counts;
   }
 };
 
@@ -187,7 +193,26 @@ const collapseComment = (comment) => {
 
 const loadComments = async () => {
   if (!props.post) return;
-  comments.value = await CommentService.loadComments(props.post.id);
+  const [commentsData, counts] = await Promise.all([
+    CommentService.loadComments(props.post.id),
+    CommentService.getCommentCount(props.post.id),
+  ]);
+  comments.value = commentsData;
+  commentCounts.value = counts;
+};
+
+const toggleChildren = async (comment) => {
+  comment.showChildren = !comment.showChildren;
+  if (comment.showChildren && comment.children.length === 0) {
+    comment.currentPage = 1;
+    comment.hasMore = true;
+    console.log("loadChildComments::", comment);
+    const [childComments, repliesCount] = await Promise.all([
+      loadChildComments(comment),
+      CommentService.getRootCommentRepliesCount(props.post.id, comment.id),
+    ]);
+    comment.repliesCount = repliesCount;
+  }
 };
 
 const loadChildComments = async (parentComment) => {
@@ -228,15 +253,6 @@ const loadChildComments = async (parentComment) => {
 const handleChildCommentsScroll = async (event, comment) => {
   const { scrollHeight, scrollTop, clientHeight } = event.target;
   if (scrollHeight - scrollTop - clientHeight < 50 && comment.hasMore) {
-    await loadChildComments(comment);
-  }
-};
-
-const toggleChildren = async (comment) => {
-  comment.showChildren = !comment.showChildren;
-  if (comment.showChildren && comment.children.length === 0) {
-    comment.currentPage = 1;
-    comment.hasMore = true;
     await loadChildComments(comment);
   }
 };
