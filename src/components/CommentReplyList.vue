@@ -3,7 +3,6 @@
     v-if="showChildren && children.length"
     class="comment-reply-list"
     :data-source="children"
-    @scroll="handleChildCommentsScroll"
   >
     <template #renderItem="{ item: childItem }">
       <a-list-item>
@@ -75,6 +74,11 @@
         </a-comment>
       </a-list-item>
     </template>
+    <template #loadMore>
+      <div v-if="hasMore" class="load-more-item">
+        <a-button :loading="loading" @click="handleLoadMore">加载更多</a-button>
+      </div>
+    </template>
   </a-list>
 </template>
 
@@ -142,8 +146,23 @@ const handleReply = async (comment: any) => {
   }
 };
 
-const handleChildCommentsScroll = (event: any) => {
-  emit("scroll", event);
+const currentPage = ref(1);
+const pageSize = ref(10);
+
+const handleLoadMore = () => {
+  if (loading.value) return;
+  loading.value = true;
+  emit("scroll", {
+    currentPage: currentPage.value,
+    pageSize: pageSize.value,
+    onSuccess: () => {
+      currentPage.value++;
+      loading.value = false;
+    },
+    onError: () => {
+      loading.value = false;
+    },
+  });
 };
 </script>
 
@@ -218,5 +237,10 @@ const handleChildCommentsScroll = (event: any) => {
 
 .comment-ip {
   color: #a6a6a6;
+}
+
+.load-more-item {
+  text-align: center;
+  padding: 16px 0;
 }
 </style>
