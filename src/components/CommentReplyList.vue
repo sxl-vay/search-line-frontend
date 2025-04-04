@@ -14,7 +14,7 @@
           <template #author>
             <div class="reply-to" v-if="childItem.parentAuthor">
               <span class="reply-author">
-                {{ childItem.author }} <a>回复</a>{{ childItem.parentAuthor }}
+                {{ childItem.author }} <a>-></a>{{ childItem.parentAuthor }}
               </span>
             </div>
           </template>
@@ -46,7 +46,7 @@
           </template>
           <template #actions>
             <span @click="toggleReply(childItem)" style="margin-right: 16px"
-              >回复</span
+              >子回复</span
             >
           </template>
           <!-- 回复表单 -->

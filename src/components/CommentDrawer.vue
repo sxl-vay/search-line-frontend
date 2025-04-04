@@ -35,6 +35,8 @@
           :data-source="comments"
           :header="`${commentCounts.objAllCommentCount} 条root评论`"
           item-layout="horizontal"
+          style="height: calc(100vh - 500px); overflow-y: auto"
+          @scroll="handleCommentsScroll"
         >
           <template #renderItem="{ item }">
             <a-list-item>
@@ -73,7 +75,7 @@
                 </template>
                 <template #actions>
                   <span @click="toggleReply(item)" style="margin-right: 16px"
-                    >回复</span
+                    >父回复</span
                   >
                   <span @click="toggleChildren(item)">
                     {{ item.showChildren ? "收起" : "展开" }} ({{
@@ -133,6 +135,7 @@ import MyDivider from "@/components/MyDivider.vue";
 import myAxios from "@/plugins/myAxios";
 import CommentReplyList from "@/components/CommentReplyList.vue";
 import { CommentService, type Comment } from "@/services/CommentService";
+import { PAGE_SIZE } from "@/config/constants";
 
 interface Post {
   id: number;
@@ -163,6 +166,9 @@ const commentForm = ref({
 const replyForm = ref({
   content: "",
 });
+const currentPage = ref(1);
+const hasMore = ref(true);
+const loading = ref(false);
 
 watch(
   () => props.visible,
@@ -191,14 +197,42 @@ const collapseComment = (comment) => {
   comment.isExpanded = false;
 };
 
-const loadComments = async () => {
-  if (!props.post) return;
-  const [commentsData, counts] = await Promise.all([
-    CommentService.loadComments(props.post.id),
-    CommentService.getCommentCount(props.post.id),
-  ]);
-  comments.value = commentsData;
-  commentCounts.value = counts;
+const loadComments = async (isLoadMore = false) => {
+  if (
+    !props.post ||
+    (!isLoadMore && loading.value) ||
+    (isLoadMore && !hasMore.value)
+  )
+    return;
+
+  try {
+    loading.value = true;
+    const [commentsData, counts] = await Promise.all([
+      CommentService.loadComments(
+        props.post.id,
+        "0",
+        PAGE_SIZE.COMMENT_LIST,
+        currentPage.value
+      ),
+      CommentService.getCommentCount(props.post.id),
+    ]);
+
+    if (commentsData.length < PAGE_SIZE.COMMENT_LIST) {
+      hasMore.value = false;
+    }
+
+    if (isLoadMore) {
+      comments.value = [...comments.value, ...commentsData];
+    } else {
+      comments.value = commentsData;
+      hasMore.value = true;
+      currentPage.value = 1;
+    }
+
+    commentCounts.value = counts;
+  } finally {
+    loading.value = false;
+  }
 };
 
 const toggleChildren = async (comment) => {
@@ -228,11 +262,11 @@ const loadChildComments = async (parentComment) => {
     const newComments = await CommentService.loadChildComments(
       props.post.id,
       parentComment.id,
-      10,
+      PAGE_SIZE.COMMENT_REPLY_LIST,
       parentComment.currentPage
     );
 
-    if (newComments.length < 10) {
+    if (newComments.length < PAGE_SIZE.COMMENT_REPLY_LIST) {
       parentComment.hasMore = false;
     }
 
@@ -254,6 +288,20 @@ const handleChildCommentsScroll = async (event, comment) => {
   const { scrollHeight, scrollTop, clientHeight } = event.target;
   if (scrollHeight - scrollTop - clientHeight < 50 && comment.hasMore) {
     await loadChildComments(comment);
+  }
+};
+
+const handleCommentsScroll = async (event) => {
+  const { target } = event;
+  const { scrollHeight, scrollTop, clientHeight } = target;
+
+  if (
+    scrollHeight - scrollTop - clientHeight < 50 &&
+    hasMore.value &&
+    !loading.value
+  ) {
+    currentPage.value++;
+    await loadComments(true);
   }
 };
 
