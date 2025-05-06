@@ -8,13 +8,26 @@ const instance = axios.create({
   headers: {},
 });
 
+// 生成traceid的函数
+const generateTraceId = () => {
+  const timestamp = new Date().getTime();
+  const random = Math.floor(Math.random() * 1000000);
+  return `trace-${timestamp}-${random}`;
+};
+
 // 添加请求拦截器
 instance.interceptors.request.use(
   function (config) {
+    // 添加token
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `haha ${token}`;
     }
+
+    // 添加traceid
+    const traceId = generateTraceId();
+    config.headers["X-Trace-Id"] = traceId;
+
     return config;
   },
   function (error) {
